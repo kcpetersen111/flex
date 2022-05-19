@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"time"
 )
 
 func main() {
@@ -32,6 +33,8 @@ func main() {
 	scanner.Scan()
 	movie := scanner.Text()
 
+	log.Printf("Streaming %s",movie)
+
 	file,err := os.Open(movie)
 	if err != nil {
 		fmt.Fprintf(conn, "Error in opening the movie, %v\n",err)
@@ -40,7 +43,10 @@ func main() {
 	
 	bytearr := make([]byte, 4086)
 
-	
+	duration, err := time.ParseDuration("1ms")
+	if err != nil{
+		log.Fatalf("Error in parsing time buffer: %v",err)
+	}
 
 	for {
 		length, err := file.Read(bytearr)
@@ -48,8 +54,9 @@ func main() {
 			break
 		}
 		for i:=0; i<length; i++{
-			fmt.Fprintf(conn, "%c",bytearr[i])
+			fmt.Fprintf(conn, "%b",bytearr[i])
 		}
+		time.Sleep(duration)
 	}
 
 
