@@ -24,7 +24,7 @@ func main() {
 	}
 	movieList := make([]string, 0)
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".mkv") || strings.HasSuffix(file.Name(), ".mp4") {
+		if strings.HasSuffix(file.Name(), ".mkv") || strings.HasSuffix(file.Name(), ".mp4") { //Maybe we should create an array of known filetypes that we can use for video? Or should we just try and throw it in the transcoder and see if it gives an error?
 			fmt.Printf("Found movie %s\n", file.Name())
 			movieList = append(movieList, file.Name())
 		}
