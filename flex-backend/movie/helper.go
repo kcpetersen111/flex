@@ -1,4 +1,4 @@
-package main
+package movie
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// we are going to need to change this to a cli flag
 var MovieDir = "Movie"
 
 func readLocalDir() []string {
@@ -30,13 +31,7 @@ func isValidFile(file string) bool {
 	return (strings.HasSuffix(file, ".mkv") || strings.HasSuffix(file, ".mp4") || strings.HasSuffix(file, ".m4v"))
 }
 
-func main() {
-
-	go func() {
-		// Run the Http server
-		server()
-	}()
-
+func listMovies() {
 	_, err := os.Stat(MovieDir)
 	if os.IsNotExist(err) {
 		os.Mkdir(MovieDir, 0750)
@@ -51,7 +46,9 @@ func main() {
 			movieList = append(movieList, file)
 		}
 	}
+}
 
+func getMovieInfo() {
 	fmt.Println("What would you like to watch?")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -63,7 +60,5 @@ func main() {
 		log.Fatalf("There was an error: %v\n", err)
 	}
 	fmt.Printf("Movie name: %s\nMovie size: %d\nFile mode: %s\nLast modified: %s\n", movie.Name(), movie.Size(), movie.Mode(), movie.ModTime())
-
-	return
 
 }

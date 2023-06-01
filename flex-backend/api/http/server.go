@@ -1,7 +1,6 @@
-package main
+package http
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -11,7 +10,9 @@ func server() {
 	// Send the index.html file to the client
 	http.Handle("/", http.FileServer(http.Dir("../website")))
 	http.HandleFunc("/getMovies", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Here are the detected files! , %q", readLocalDir())
+		// list out local movies
+		// fmt.Fprintf(w, "Here are the detected files! , %q", readLocalDir())
+
 	})
 	http.HandleFunc("/getInfo", func(w http.ResponseWriter, r *http.Request) {
 		// Get video file from request, and send back what we know about it.
