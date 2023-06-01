@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"path/filepath"
 )
+
+// A list of file types that we should support
+var fileExtensions = []string{"*.mp4", "*.m4v", "*.mkv"}
 
 type Movie struct {
 	movieDir string
@@ -18,25 +21,30 @@ func NewMovie(movieDir string) *Movie {
 	}
 }
 
-func (m Movie) readLocalDir() []string {
+func (m Movie) readLocalDir(root string) ([]string, error) {
 	// return a slice of just the file names within a movieDir directory
-	// Might want to implement this with a parameter which is the folder name to scan
-	// and then recursively scan all directories in the movie root folder
-	dirFiles, err := os.ReadDir(m.movieDir)
+	var matches []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		for _, pattern := range fileExtensions {
+			// Check each file to check the extension. Might not be the most efficient
+			if matched, err := filepath.Match(pattern, filepath.Base(path)); err != nil {
+				return err
+			} else if matched {
+				matches = append(matches, path)
+			}
+		}
+		return nil
+	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-
-	files := make([]string, 0)
-	for _, val := range dirFiles {
-		files = append(files, val.Name())
-	}
-	return files
-}
-
-//This is pretty jank
-func isValidFile(file string) bool {
-	return (strings.HasSuffix(file, ".mkv") || strings.HasSuffix(file, ".mp4") || strings.HasSuffix(file, ".m4v"))
+	return matches, nil
 }
 
 func (m Movie) ListMovies() {
@@ -45,15 +53,12 @@ func (m Movie) ListMovies() {
 		os.Mkdir(m.movieDir, 0750)
 	}
 
-	files := m.readLocalDir()
-
-	movieList := make([]string, 0)
-	for _, file := range files {
-		if isValidFile(file) { // Maybe we should create an array of known filetypes that we can use for video? Or should we just try and throw it in the transcoder and see if it gives an error?
-			fmt.Printf("Found movie %s\n", file)
-			movieList = append(movieList, file)
-		}
+	files, err := m.readLocalDir(m.movieDir)
+	if err != nil {
+		log.Println(err)
 	}
+
+	fmt.Printf("Found these movies!\n%v\n", files)
 }
 
 func (m Movie) getMovieInfo() {
