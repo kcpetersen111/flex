@@ -8,14 +8,21 @@ import (
 	"strings"
 )
 
-// we are going to need to change this to a cli flag
-var MovieDir = "Movie"
+type Movie struct {
+	movieDir string
+}
 
-func readLocalDir() []string {
-	// return a slice of just the file names within a directory ( curently './Movie' )
+func NewMovie(movieDir string) *Movie {
+	return &Movie{
+		movieDir: movieDir,
+	}
+}
+
+func (m Movie) readLocalDir() []string {
+	// return a slice of just the file names within a movieDir directory
 	// Might want to implement this with a parameter which is the folder name to scan
 	// and then recursively scan all directories in the movie root folder
-	dirFiles, err := os.ReadDir(MovieDir)
+	dirFiles, err := os.ReadDir(m.movieDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,17 +34,18 @@ func readLocalDir() []string {
 	return files
 }
 
+//This is pretty jank
 func isValidFile(file string) bool {
 	return (strings.HasSuffix(file, ".mkv") || strings.HasSuffix(file, ".mp4") || strings.HasSuffix(file, ".m4v"))
 }
 
-func listMovies() {
-	_, err := os.Stat(MovieDir)
+func (m Movie) ListMovies() {
+	_, err := os.Stat(m.movieDir)
 	if os.IsNotExist(err) {
-		os.Mkdir(MovieDir, 0750)
+		os.Mkdir(m.movieDir, 0750)
 	}
 
-	files := readLocalDir()
+	files := m.readLocalDir()
 
 	movieList := make([]string, 0)
 	for _, file := range files {
@@ -48,13 +56,13 @@ func listMovies() {
 	}
 }
 
-func getMovieInfo() {
+func (m Movie) getMovieInfo() {
 	fmt.Println("What would you like to watch?")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	t := scanner.Text()
 
-	moviePath := fmt.Sprintf("%s/%s", MovieDir, t)
+	moviePath := fmt.Sprintf("%s/%s", m.movieDir, t)
 	movie, err := os.Stat(moviePath)
 	if err != nil {
 		log.Fatalf("There was an error: %v\n", err)
