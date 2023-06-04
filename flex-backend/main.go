@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	server "flex/api/http"
 	"flex/movie"
 	"log"
 	"os"
@@ -32,6 +33,11 @@ func main() {
 	movie := movie.NewMovie(path)
 
 	movie.ListMovies()
+
+	server := server.Server{}
+
+	server.BuildEndpoints()
+	server.Serve()
 
 	return
 
