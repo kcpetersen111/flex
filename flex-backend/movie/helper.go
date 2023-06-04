@@ -9,7 +9,8 @@ import (
 )
 
 // A list of file types that we should support
-var fileExtensions = []string{"*.mp4", "*.m4v", "*.mkv"}
+// For now let's just start with the basic mp4 file format
+var supportedFileExtensions = []string{"*.mp4"}
 
 type Movie struct {
 	movieDir string
@@ -31,7 +32,7 @@ func (m Movie) readLocalDir(root string) ([]string, error) {
 		if info.IsDir() {
 			return nil
 		}
-		for _, pattern := range fileExtensions {
+		for _, pattern := range supportedFileExtensions {
 			// Check each file to check the extension. Might not be the most efficient
 			if matched, err := filepath.Match(pattern, filepath.Base(path)); err != nil {
 				return err
@@ -50,7 +51,11 @@ func (m Movie) readLocalDir(root string) ([]string, error) {
 func (m Movie) ListMovies() {
 	_, err := os.Stat(m.movieDir)
 	if os.IsNotExist(err) {
-		os.Mkdir(m.movieDir, 0750)
+		err = os.Mkdir(m.movieDir, 0750)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 	}
 
 	files, err := m.readLocalDir(m.movieDir)
