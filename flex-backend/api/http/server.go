@@ -22,6 +22,8 @@ func (Server) BuildEndpoints() {
 	http.HandleFunc("/playFile", handlePlayFile)
 
 	http.HandleFunc("/stopFile", handleStopFile)
+
+	http.HandleFunc("/ws", handleWebSocket)
 }
 
 func (Server) Serve() {
@@ -51,4 +53,9 @@ func handleStopFile(w http.ResponseWriter, r *http.Request) {
 	// Stop the ffmpeg stream from the specified file in the request.
 	// Would we want to attach a session id to the process so we know how to stop the stream?
 	fmt.Println("Called stop movie route!")
+}
+
+func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	// Need to perform an http upgrade and use some other library to handle web sockets here
+	fmt.Println("Called the web socket route!")
 }

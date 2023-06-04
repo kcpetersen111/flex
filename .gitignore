@@ -2,3 +2,5 @@ flex
 *.txt
 *.mp4
 *.mkv
+*.swp
+*.*.swp
