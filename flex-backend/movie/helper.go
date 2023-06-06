@@ -12,18 +12,18 @@ import (
 // For now let's just start with the basic mp4 file format
 var supportedFileExtensions = []string{"*.mp4"}
 
-type Movie struct {
-	movieDir string
+type MovieHandler struct {
+	MovieDir string
 }
 
-func NewMovie(movieDir string) *Movie {
-	return &Movie{
-		movieDir: movieDir,
+func NewMovieHandler(MovieDir string) *MovieHandler {
+	return &MovieHandler{
+		MovieDir: MovieDir,
 	}
 }
 
-func (m Movie) readLocalDir(root string) ([]string, error) {
-	// return a slice of just the file names within a movieDir directory
+func (m MovieHandler) ReadLocalDir(root string) ([]string, error) {
+	// return a slice of just the file names within a MovieDir directory
 	var matches []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -48,17 +48,18 @@ func (m Movie) readLocalDir(root string) ([]string, error) {
 	return matches, nil
 }
 
-func (m Movie) ListMovies() {
-	_, err := os.Stat(m.movieDir)
+func (m MovieHandler) ListMovies() {
+	log.Println("The path is", m.MovieDir)
+	_, err := os.Stat(m.MovieDir)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(m.movieDir, 0750)
+		err = os.Mkdir(m.MovieDir, 0750)
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
 	}
 
-	files, err := m.readLocalDir(m.movieDir)
+	files, err := m.ReadLocalDir(m.MovieDir)
 	if err != nil {
 		log.Println(err)
 	}
@@ -66,13 +67,13 @@ func (m Movie) ListMovies() {
 	fmt.Printf("Found these movies!\n%v\n", files)
 }
 
-func (m Movie) getMovieInfo() {
+func (m MovieHandler) getMovieInfo() {
 	fmt.Println("What would you like to watch?")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	t := scanner.Text()
 
-	moviePath := fmt.Sprintf("%s/%s", m.movieDir, t)
+	moviePath := fmt.Sprintf("%s/%s", m.MovieDir, t)
 	movie, err := os.Stat(moviePath)
 	if err != nil {
 		log.Fatalf("There was an error: %v\n", err)
