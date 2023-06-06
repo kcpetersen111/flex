@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var sAddr string
 	var port int
@@ -29,12 +30,15 @@ func main() {
 		// Environment variable doesn't exist, set default
 		path = "/Movies"
 	}
+	log.Printf("The path is: %s\n", path)
 
-	movie := movie.NewMovie(path)
+	MovieHandler := movie.NewMovieHandler(path)
 
-	movie.ListMovies()
+	log.Println(MovieHandler)
 
-	server := server.Server{}
+	MovieHandler.ListMovies()
+
+	server := server.Server{MovieHandler}
 
 	server.BuildEndpoints()
 	server.Serve()
