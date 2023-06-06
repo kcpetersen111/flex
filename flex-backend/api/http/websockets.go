@@ -19,16 +19,17 @@ const (
 	GETMOVIEINFO
 )
 
-// Passed from the client to the server to tell it what action it wants performed
+// Passed from the client to the server to tell it what action it wants performed, and on which movie it would like to do it on
 type Message struct {
 	Message int    `json:"message"`
 	Movie   string `json:"movie"`
 }
 
 func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Need to perform an http upgrade and use some other library to handle web sockets here
-	fmt.Println("Called the web socket route!")
-	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+	conn, err := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for {
 		// Read message from browser
@@ -53,13 +54,13 @@ func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
+			// Serialize the slice of file paths to send back to the client
 			for _, val := range files {
 				for _, char := range val {
 					bytes = append(bytes, byte(char))
 				}
+				// seperate the movie filepaths with a comma which is sent back to the client
 				bytes = append(bytes, byte(','))
-
-				// fmt.Println(val)
 			}
 
 			if err = conn.WriteMessage(msgType, bytes); err != nil {

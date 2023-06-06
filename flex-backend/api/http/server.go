@@ -20,8 +20,7 @@ func (s Server) BuildEndpoints() {
 	http.HandleFunc("/playFile", handlePlayFile)
 	http.HandleFunc("/stopFile", handleStopFile)
 	http.HandleFunc("/ws", s.handleWebSocket)
-	// Test the websocket
-	http.HandleFunc("/echo", s.handleWebSocket)
+	// Used to test the websocket
 	http.HandleFunc("/", handleSendRoot)
 }
 

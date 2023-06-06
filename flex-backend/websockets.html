@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <!-- websockets.html -->
 <input id="input" type="text" />
 <button onclick="send()">Send</button>
@@ -16,7 +17,7 @@
     var input = document.getElementById("input");
     var getMovieInfoInput = document.getElementById("getMovieInfoInput");
     var output = document.getElementById("output");
-    var socket = new WebSocket("ws://localhost:8080/echo");
+    var socket = new WebSocket("ws://localhost:8080/ws");
     var test = {};
 
     socket.onopen = function () {
