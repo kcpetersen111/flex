@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!-- websockets.html -->
+<input id="input" type="text" />
+<button onclick="send()">Send</button>
+
+<br></br>
+
+<button onclick="listMovies()">listMovies</button>
+
+<br></br>
+
+<input id="getMovieInfoInput" type="text" />
+<button onclick="getMovieInfo()">getMovieInfo</button>
+<pre id="output"></pre>
+
+<script>
+    var input = document.getElementById("input");
+    var getMovieInfoInput = document.getElementById("getMovieInfoInput");
+    var output = document.getElementById("output");
+    var socket = new WebSocket("ws://localhost:8080/ws");
+    var test = {};
+
+    socket.onopen = function () {
+        output.innerHTML += "Status: Connected\n";
+    };
+
+    socket.onmessage = function (e) {
+        output.innerHTML += "Server: " + e.data + "\n";
+    };
+
+    function send() {
+        test.message = parseInt(input.value);
+        console.log(test);
+        socket.send(JSON.stringify(test));
+        input.value = "";
+    }
+
+    function listMovies() {
+        test.message = 0;
+        console.log(test);
+        socket.send(JSON.stringify(test));
+    }
+
+    function getMovieInfo() {
+        test.message = 1;
+        test.movie = getMovieInfoInput.value;
+        console.log(test);
+        socket.send(JSON.stringify(test));
+    }
+</script>

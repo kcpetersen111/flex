@@ -1,6 +1,7 @@
-package http
+package flexapi
 
 import (
+	"flex/movie"
 	"fmt"
 	"html"
 	"log"
@@ -10,27 +11,29 @@ import (
 // we will want to use a builder pattern to configure the server
 type Server struct {
 	//idk what to put in this rn but we will want it latter
+	MovieHandler *movie.MovieHandler
 }
 
-// im not a huge fan of this but it will do for now
-// I think it should just have function names where there are lambda funcs rn
-func (Server) BuildEndpoints() {
-
+func (s Server) BuildEndpoints() {
 	http.HandleFunc("/getMovies", handleGetMovies)
-
 	http.HandleFunc("/getInfo", handleGetMovieInfo)
-
 	http.HandleFunc("/playFile", handlePlayFile)
-
 	http.HandleFunc("/stopFile", handleStopFile)
-
-	http.HandleFunc("/ws", handleWebSocket)
+	http.HandleFunc("/ws", s.handleWebSocket)
+	// Used to test the websocket
+	http.HandleFunc("/", handleSendRoot)
 }
 
 func (Server) Serve() {
 	// Start the server
-	log.Println("Starting server on port 8081")
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Println("Starting server on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func handleSendRoot(w http.ResponseWriter, r *http.Request) {
+	// list out local movies
+	fmt.Println("Called route!")
+	http.ServeFile(w, r, "websockets.html")
 }
 
 func handleGetMovies(w http.ResponseWriter, r *http.Request) {
@@ -58,10 +61,4 @@ func handleStopFile(w http.ResponseWriter, r *http.Request) {
 	// Would we want to attach a session id to the process so we know how to stop the stream?
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 	fmt.Println("Called stop movie route!")
-}
-
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Need to perform an http upgrade and use some other library to handle web sockets here
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called the web socket route!")
 }
