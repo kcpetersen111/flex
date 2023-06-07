@@ -1,6 +1,7 @@
 package flexapi
 
 import (
+	"encoding/json"
 	"flex/movie"
 	"fmt"
 	"html"
@@ -15,8 +16,8 @@ type Server struct {
 }
 
 func (s Server) BuildEndpoints() {
-	http.HandleFunc("/getMovies", handleGetMovies)
-	http.HandleFunc("/getInfo", handleGetMovieInfo)
+	http.HandleFunc("/getMovies", s.handleGetMovies)
+	http.HandleFunc("/getInfo", s.handleGetMovieInfo)
 	http.HandleFunc("/playFile", handlePlayFile)
 	http.HandleFunc("/stopFile", handleStopFile)
 	http.HandleFunc("/ws", s.handleWebSocket)
@@ -24,29 +25,68 @@ func (s Server) BuildEndpoints() {
 	http.HandleFunc("/", handleSendRoot)
 }
 
-func (Server) Serve() {
+func (Server) Serve(port int) {
 	// Start the server
-	log.Println("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Starting server on port %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func handleSendRoot(w http.ResponseWriter, r *http.Request) {
-	// list out local movies
-	fmt.Println("Called route!")
 	http.ServeFile(w, r, "websockets.html")
 }
 
-func handleGetMovies(w http.ResponseWriter, r *http.Request) {
-	// list out local movies
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called get movies route!")
+func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
+	// Send back the filepaths to client as json
+	files, err := s.MovieHandler.ReadLocalDir(s.MovieHandler.MovieDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	jData, err := json.Marshal(files)
+	if err != nil {
+		log.Println(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jData)
 }
 
-func handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
+func (s Server) handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
 	// Get video file from request, and send back what we know about it.
-	// Ex name of file with no extension, length, cover art, etc.
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called get movie info route!")
+	// Query param will need to have the full file path, since that is what we are sending to the client when it asks for the list of movies
+	var movie string
+	for k, v := range r.URL.Query() {
+		// Get the first value of the query param that matches the string 'movie'
+		// localhost:8080/getInfo?movie=1&movie=2
+		// This would cause test to have 2 values, [1 2] instead of just 1
+		if k == "movie" {
+			movie = v[0]
+			break
+		}
+	}
+
+	movieInfo, err := s.MovieHandler.GetMovieInfo(string(movie))
+	if err != nil {
+		log.Println(err)
+	}
+
+	type movieInfoResponse struct {
+		Name string
+		Size int64
+		Mode string
+	}
+
+	movieResponse := movieInfoResponse{}
+	movieResponse.Name = movieInfo.Name()
+	movieResponse.Size = movieInfo.Size()
+	// Convert the mode from rwx-rwx-rwx to octal (777 for example)
+	movieResponse.Mode = fmt.Sprintf("%o", movieInfo.Mode())
+
+	// Send the response back to the client
+	jData, err := json.Marshal(movieResponse)
+	if err != nil {
+		log.Println(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jData)
 }
 
 func handlePlayFile(w http.ResponseWriter, r *http.Request) {

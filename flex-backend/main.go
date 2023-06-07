@@ -34,15 +34,12 @@ func main() {
 
 	MovieHandler := movie.NewMovieHandler(path)
 
-	log.Println(MovieHandler)
-
 	MovieHandler.ListMovies()
 
 	server := server.Server{MovieHandler}
 
 	server.BuildEndpoints()
-	server.Serve()
+	server.Serve(port)
 
 	return
-
 }

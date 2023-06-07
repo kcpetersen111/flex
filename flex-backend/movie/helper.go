@@ -1,7 +1,6 @@
 package movie
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -49,7 +48,6 @@ func (m MovieHandler) ReadLocalDir(root string) ([]string, error) {
 }
 
 func (m MovieHandler) ListMovies() {
-	log.Println("The path is", m.MovieDir)
 	_, err := os.Stat(m.MovieDir)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(m.MovieDir, 0750)
@@ -67,17 +65,11 @@ func (m MovieHandler) ListMovies() {
 	fmt.Printf("Found these movies!\n%v\n", files)
 }
 
-func (m MovieHandler) getMovieInfo() {
-	fmt.Println("What would you like to watch?")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	t := scanner.Text()
-
-	moviePath := fmt.Sprintf("%s/%s", m.MovieDir, t)
+func (MovieHandler) GetMovieInfo(moviePath string) (os.FileInfo, error) {
 	movie, err := os.Stat(moviePath)
 	if err != nil {
-		log.Fatalf("There was an error: %v\n", err)
+		return nil, err
 	}
-	fmt.Printf("Movie name: %s\nMovie size: %d\nFile mode: %s\nLast modified: %s\n", movie.Name(), movie.Size(), movie.Mode(), movie.ModTime())
+	return movie, nil
 
 }
