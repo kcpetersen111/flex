@@ -2,6 +2,7 @@ package flexapi
 
 import (
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 
@@ -41,4 +42,19 @@ func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// I think the play and stop handlers need to be implemented within the websocket
+func handlePlayFile(w http.ResponseWriter, r *http.Request) {
+	// Start the ffmpeg stream from the specified file in the request.
+	// Would we want to attach a session id to the process so we know who is playing what in the future?
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	fmt.Println("Called play movie route!")
+}
+
+func handleStopFile(w http.ResponseWriter, r *http.Request) {
+	// Stop the ffmpeg stream from the specified file in the request.
+	// Would we want to attach a session id to the process so we know how to stop the stream?
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	fmt.Println("Called stop movie route!")
 }
