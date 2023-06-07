@@ -25,6 +25,7 @@ type Message struct {
 	Movie   string `json:"movie"`
 }
 
+// This is temporary to just test the websockets out. Need to change the structure
 func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
 	if err != nil {
