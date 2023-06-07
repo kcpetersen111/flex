@@ -1,7 +1,7 @@
 
 <template>
     <br/>
-    <p class=" bg-red-300">
+    <p class=" bg-red-300 flex justify-center">
         This is where the html will go for 
     </p>
 </template>
