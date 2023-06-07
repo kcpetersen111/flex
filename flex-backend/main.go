@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	server "flex/api/http"
-	"flex/movie"
+	"flex/movieHandler"
 	"log"
 	"os"
 
@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// Get line numbers in log messages
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var sAddr string
@@ -28,11 +29,11 @@ func main() {
 
 	if len(path) == 0 {
 		// Environment variable doesn't exist, set default
-		path = "/Movies"
+		path = "./Movies"
 	}
 	log.Printf("The path is: %s\n", path)
 
-	MovieHandler := movie.NewMovieHandler(path)
+	MovieHandler := movieHandler.NewMovieHandler(path)
 
 	MovieHandler.ListMovies()
 
