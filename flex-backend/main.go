@@ -29,7 +29,7 @@ func main() {
 
 	if len(path) == 0 {
 		// Environment variable doesn't exist, set default
-		path = "./Movies"
+		path = "/Movies"
 	}
 	log.Printf("The path is: %s\n", path)
 
