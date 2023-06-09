@@ -44,6 +44,8 @@ func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
 	jData, err := json.Marshal(files)
 	if err != nil {
 		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 - Something bad happened!"))
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jData)
