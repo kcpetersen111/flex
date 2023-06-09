@@ -27,7 +27,7 @@ func (s Server) BuildEndpoints() {
 func (Server) Serve(port int) {
 	// Start the server
 	log.Printf("Starting server on port %d\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil))
 }
 
 func handleSendRoot(w http.ResponseWriter, r *http.Request) {
