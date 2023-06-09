@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	server "flex/api/http"
-	"flex/movieHandler"
 	"log"
 	"os"
+
+	server "github.com/kcpetersen111/flex/api/http"
+	"github.com/kcpetersen111/flex/movieHandler"
 
 	"github.com/joho/godotenv"
 )

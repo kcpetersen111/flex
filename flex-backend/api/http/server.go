@@ -2,10 +2,11 @@ package flexapi
 
 import (
 	"encoding/json"
-	movie "flex/movieHandler"
 	"fmt"
 	"log"
 	"net/http"
+
+	movie "github.com/kcpetersen111/flex/movieHandler"
 )
 
 // we will want to use a builder pattern to configure the server
