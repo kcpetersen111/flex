@@ -2,20 +2,18 @@ package main
 
 import (
 	"flag"
-	server "flex/api/http"
-	"flex/movie"
-	"flex/persist"
 	"log"
 	"os"
+
+	server "github.com/kcpetersen111/flex/api/http"
+	"github.com/kcpetersen111/flex/movieHandler"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Get line numbers in log messages
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
-	_, err := persist.Connect("root", "password", "0.0.0.0:5432")
-	log.Print(err)
 
 	var sAddr, dbAddr, dbUser, dbPassword string
 	var port int
@@ -27,7 +25,7 @@ func main() {
 
 	// Read env variable for the movie directory from .env first, then look at the global environment variables
 	// If the env file doesn't exist, then let's just log the message anyways
-	err = godotenv.Load()
+	err := godotenv.Load()
 	if err != nil {
 		log.Println(err)
 	}
@@ -39,17 +37,14 @@ func main() {
 	}
 	log.Printf("The path is: %s\n", path)
 
-	MovieHandler := movie.NewMovieHandler(path)
-
-	log.Println(MovieHandler)
+	MovieHandler := movieHandler.NewMovieHandler(path)
 
 	MovieHandler.ListMovies()
 
 	server := server.Server{MovieHandler}
 
 	server.BuildEndpoints()
-	server.Serve()
+	server.Serve(port)
 
 	return
-
 }

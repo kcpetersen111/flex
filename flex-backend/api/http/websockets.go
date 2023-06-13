@@ -1,8 +1,8 @@
 package flexapi
 
 import (
-	"encoding/json"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 
@@ -14,65 +14,47 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-const (
-	LISTMOVIES int = iota
-	GETMOVIEINFO
-)
-
-// Passed from the client to the server to tell it what action it wants performed, and on which movie it would like to do it on
-type Message struct {
-	Message int    `json:"message"`
-	Movie   string `json:"movie"`
-}
-
 // This is temporary to just test the websockets out. Need to change the structure
 func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
+	// Websocket will be created when the client wants to play a movie.
+	// This is how we are going to stream the movie from the server to the client
+
+	// Upgrade the plain http connection to a web socket
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// This will read a value from the socket, print the message to the console, and write it back to the client
+	// Basically just a ping / pong to make sure that the connection works for now
 	for {
 		// Read message from browser
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			return
 		}
-		fmt.Println("Message: ", string(msg))
-		var test Message
-		err = json.Unmarshal(msg, &test)
 
 		// Print the message to the console
-		fmt.Printf("%s sent: %v\n", conn.RemoteAddr(), test)
+		fmt.Printf("%s sent: %v\n", conn.RemoteAddr(), string(msg))
 
-		switch test.Message {
-		case LISTMOVIES:
-			fmt.Println("Wanted to list movies!")
-			var bytes []byte
-
-			files, err := s.MovieHandler.ReadLocalDir(s.MovieHandler.MovieDir)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Serialize the slice of file paths to send back to the client
-			for _, val := range files {
-				for _, char := range val {
-					bytes = append(bytes, byte(char))
-				}
-				// seperate the movie filepaths with a comma which is sent back to the client
-				bytes = append(bytes, byte(','))
-			}
-
-			if err = conn.WriteMessage(msgType, bytes); err != nil {
-				return
-			}
-		case GETMOVIEINFO:
-			fmt.Println("Wanted to get a specific movie information")
-		}
 		// Write message back to browser
 		if err = conn.WriteMessage(msgType, msg); err != nil {
 			return
 		}
 	}
+}
+
+// I think the play and stop handlers need to be implemented within the websocket
+func handlePlayFile(w http.ResponseWriter, r *http.Request) {
+	// Start the ffmpeg stream from the specified file in the request.
+	// Would we want to attach a session id to the process so we know who is playing what in the future?
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	fmt.Println("Called play movie route!")
+}
+
+func handleStopFile(w http.ResponseWriter, r *http.Request) {
+	// Stop the ffmpeg stream from the specified file in the request.
+	// Would we want to attach a session id to the process so we know how to stop the stream?
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	fmt.Println("Called stop movie route!")
 }

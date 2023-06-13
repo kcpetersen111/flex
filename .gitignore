@@ -4,3 +4,5 @@ flex
 *.mkv
 *.swp
 *.*.swp
+.env
+.env.local

@@ -1,4 +1,4 @@
-module flex
+module github.com/kcpetersen111/flex
 
 go 1.20
 
