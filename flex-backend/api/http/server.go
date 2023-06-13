@@ -1,11 +1,14 @@
 package flexapi
 
 import (
-	"flex/movie"
+	"encoding/json"
 	"fmt"
-	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+
+	movie "github.com/kcpetersen111/flex/movieHandler"
 )
 
 // we will want to use a builder pattern to configure the server
@@ -14,9 +17,13 @@ type Server struct {
 	MovieHandler *movie.MovieHandler
 }
 
+type movieBody struct {
+	MoviePath string `json:moviePath`
+}
+
 func (s Server) BuildEndpoints() {
-	http.HandleFunc("/getMovies", handleGetMovies)
-	http.HandleFunc("/getInfo", handleGetMovieInfo)
+	http.HandleFunc("/getMovies", s.handleGetMovies)
+	http.HandleFunc("/getInfo", s.handleGetMovieInfo)
 	http.HandleFunc("/playFile", handlePlayFile)
 	http.HandleFunc("/stopFile", handleStopFile)
 	http.HandleFunc("/ws", s.handleWebSocket)
@@ -24,41 +31,86 @@ func (s Server) BuildEndpoints() {
 	http.HandleFunc("/", handleSendRoot)
 }
 
-func (Server) Serve() {
+func (Server) Serve(port int) {
 	// Start the server
-	log.Println("Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Starting server on port %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil))
 }
 
 func handleSendRoot(w http.ResponseWriter, r *http.Request) {
-	// list out local movies
-	fmt.Println("Called route!")
 	http.ServeFile(w, r, "websockets.html")
 }
 
-func handleGetMovies(w http.ResponseWriter, r *http.Request) {
-	// list out local movies
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called get movies route!")
+func (Server) sendServerError(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("500 - Something bad happened!"))
+	w.Header().Set("Content-Type", "application/json")
 }
 
-func handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
+func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
+	// Send back the filepaths to client as json
+	files, err := s.MovieHandler.ReadLocalDir(s.MovieHandler.MovieDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	jData, err := json.Marshal(files)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jData)
+}
+
+func (s Server) handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
 	// Get video file from request, and send back what we know about it.
-	// Ex name of file with no extension, length, cover art, etc.
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called get movie info route!")
-}
+	// Request body needs to be in the form of {"moviePath": "dir"}
 
-func handlePlayFile(w http.ResponseWriter, r *http.Request) {
-	// Start the ffmpeg stream from the specified file in the request.
-	// Would we want to attach a session id to the process so we know who is playing what in the future?
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called play movie route!")
-}
+	requestBody := movieBody{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+	}
 
-func handleStopFile(w http.ResponseWriter, r *http.Request) {
-	// Stop the ffmpeg stream from the specified file in the request.
-	// Would we want to attach a session id to the process so we know how to stop the stream?
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	fmt.Println("Called stop movie route!")
+	if err := json.Unmarshal(body, &requestBody); err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+		return
+	}
+
+	// Decode the string just in case :)
+	requestBody.MoviePath, err = url.QueryUnescape(requestBody.MoviePath)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+	}
+
+	movieInfo, err := s.MovieHandler.GetMovieInfo(requestBody.MoviePath)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// // Size is the number of bytes within the file (1000000 bytes = 1MB)
+	type movieInfoResponse struct {
+		Name string
+		Size int64
+		Mode string
+	}
+
+	movieResponse := movieInfoResponse{}
+	movieResponse.Name = movieInfo.Name()
+	movieResponse.Size = movieInfo.Size()
+	// Convert the mode from rwx-rwx-rwx to octal (777 for example)
+	movieResponse.Mode = fmt.Sprintf("%o", movieInfo.Mode())
+
+	// Send the response back to the client
+	jData, err := json.Marshal(movieResponse)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jData)
 }

@@ -2,15 +2,17 @@ package main
 
 import (
 	"flag"
-	server "flex/api/http"
-	"flex/movie"
 	"log"
 	"os"
+
+	server "github.com/kcpetersen111/flex/api/http"
+	"github.com/kcpetersen111/flex/movieHandler"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Get line numbers in log messages
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var sAddr string
@@ -32,17 +34,14 @@ func main() {
 	}
 	log.Printf("The path is: %s\n", path)
 
-	MovieHandler := movie.NewMovieHandler(path)
-
-	log.Println(MovieHandler)
+	MovieHandler := movieHandler.NewMovieHandler(path)
 
 	MovieHandler.ListMovies()
 
 	server := server.Server{MovieHandler}
 
 	server.BuildEndpoints()
-	server.Serve()
+	server.Serve(port)
 
 	return
-
 }
