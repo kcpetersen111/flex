@@ -3,8 +3,10 @@ package flexapi
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 
 	movie "github.com/kcpetersen111/flex/movieHandler"
 )
@@ -13,6 +15,10 @@ import (
 type Server struct {
 	//idk what to put in this rn but we will want it latter
 	MovieHandler *movie.MovieHandler
+}
+
+type movieBody struct {
+	MoviePath string `json:moviePath`
 }
 
 func (s Server) BuildEndpoints() {
@@ -35,6 +41,12 @@ func handleSendRoot(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "websockets.html")
 }
 
+func (Server) sendServerError(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("500 - Something bad happened!"))
+	w.Header().Set("Content-Type", "application/json")
+}
+
 func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
 	// Send back the filepaths to client as json
 	files, err := s.MovieHandler.ReadLocalDir(s.MovieHandler.MovieDir)
@@ -44,8 +56,8 @@ func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
 	jData, err := json.Marshal(files)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 - Something bad happened!"))
+		s.sendServerError(w)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jData)
@@ -53,24 +65,34 @@ func (s Server) handleGetMovies(w http.ResponseWriter, r *http.Request) {
 
 func (s Server) handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
 	// Get video file from request, and send back what we know about it.
-	// Query param will need to have the full file path, since that is what we are sending to the client when it asks for the list of movies
-	var movie string
-	for k, v := range r.URL.Query() {
-		// Get the first value of the query param that matches the string 'movie'
-		// localhost:8080/getInfo?movie=1&movie=2
-		// This would cause test to have 2 values, [1 2] instead of just 1
-		if k == "movie" {
-			movie = v[0]
-			break
-		}
+	// Request body needs to be in the form of {"moviePath": "dir"}
+
+	requestBody := movieBody{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
 	}
 
-	movieInfo, err := s.MovieHandler.GetMovieInfo(string(movie))
+	if err := json.Unmarshal(body, &requestBody); err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+		return
+	}
+
+	// Decode the string just in case :)
+	requestBody.MoviePath, err = url.QueryUnescape(requestBody.MoviePath)
+	if err != nil {
+		log.Println(err)
+		s.sendServerError(w)
+	}
+
+	movieInfo, err := s.MovieHandler.GetMovieInfo(requestBody.MoviePath)
 	if err != nil {
 		log.Println(err)
 	}
 
-	// Size is the number of bytes within the file (1000000 bytes = 1MB)
+	// // Size is the number of bytes within the file (1000000 bytes = 1MB)
 	type movieInfoResponse struct {
 		Name string
 		Size int64
@@ -87,6 +109,7 @@ func (s Server) handleGetMovieInfo(w http.ResponseWriter, r *http.Request) {
 	jData, err := json.Marshal(movieResponse)
 	if err != nil {
 		log.Println(err)
+		s.sendServerError(w)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jData)
