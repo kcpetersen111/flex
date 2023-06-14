@@ -1,17 +1,24 @@
-<script>
+<script setup>
     let playerWidth = 640;
     let playerHeight = 360;
-    let source;
+    let sourceBuffer;
+    //this is temporary just to pass the check, We will want this to be set dynamically
+    let codec = 'video/mp4; codecs="avc1.4D401F"';
+ 
 
 	onMounted(()=>{
-        source = new MediaSource();
+        if(!MediaSource.isTypeSupported(codec)){
+            console.log(`codec: ${codec} is not supported`);
+            return;
+        }
+        sourceBuffer = new MediaSource();
 
-        source.addEventListener('sourceopen',(ev)=>{
+        sourceBuffer.addEventListener('sourceopen',(ev)=>{
             console.log("source open")
             let b = ev.target;
             
             //will need a way to dynamically set the codec but that is a later problem
-            sourceBuffer = b.addSourceBuffer("audio/webm;codecs=opus")
+            sourceBuffer = b.addSourceBuffer(codec)
             sourceBuffer.addEventListener('update',()=>{
                 console.log("source buffer update")
                 if (queue.length > 0 && !sourceBuffer.updating) {
@@ -26,7 +33,7 @@
 <template>
     still here
     <video :width="{playerWidth}" :height="{playerHeight}">
-        <source src="https://youtu.be/fx2Z5ZD_Rbo" type="video/youtube">
+        <source :src="{sourceBuffer}" type="video/youtube">
         Your browser does not support video players
     </video>
  </template>
