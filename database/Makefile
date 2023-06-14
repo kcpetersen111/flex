@@ -9,7 +9,7 @@ start:
 bs: | build start
 
 clean:
-	docker container rm flexDB
+	docker container rm -f flexDB
 
 kill: 
 	docker kill flexDB
