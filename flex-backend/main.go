@@ -15,10 +15,13 @@ func main() {
 	// Get line numbers in log messages
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	var sAddr string
+	var sAddr, dbAddr, dbUser, dbPassword string
 	var port int
 	flag.StringVar(&sAddr, "s", "0.0.0.0", "Server Address")
 	flag.IntVar(&port, "p", 8080, "Server Port")
+	flag.StringVar(&dbAddr, "dbAddr", "0.0.0.0:5432", "Database Address")
+	flag.StringVar(&dbUser, "dbUser", "root", "Database User")
+	flag.StringVar(&dbPassword, "dbPassword", "password", "Database Password")
 
 	// Read env variable for the movie directory from .env first, then look at the global environment variables
 	// If the env file doesn't exist, then let's just log the message anyways
