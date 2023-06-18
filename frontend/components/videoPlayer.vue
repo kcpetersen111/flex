@@ -28,18 +28,19 @@
 
 </script>
 <script>
-    import {serverAddr} from "utils/variables";
+    import {serverAddr} from "~/utils/variables";
     
 
     function startWebSocket() {
-        const ws = new WebSocket(serverAddr);
-        ws.onopen(()=>{
+        console.log("starting websocket")
+        const ws = new WebSocket(`ws://${serverAddr}/ws`);
+        ws.addEventListener("connect",()=>{
             console.log("web socket connection is started");
         })
         return ws;
     }
 </script>
 <template>
-    still here
+    <button v-on:click="startWebSocket">start ws</button>
     
  </template>
