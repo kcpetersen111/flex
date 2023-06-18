@@ -27,5 +27,5 @@
       <NuxtLink to="/page1">routing example</NuxtLink>
     </div>
 
-    <VideoPlayer></VideoPlayer>
+    <VideoPlayer/>
 </template>

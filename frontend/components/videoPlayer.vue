@@ -1,11 +1,8 @@
 <script setup>
-    let playerWidth = 640;
-    let playerHeight = 360;
     let sourceBuffer;
     //this is temporary just to pass the check, We will want this to be set dynamically
     let codec = 'video/mp4; codecs="avc1.4D401F"';
  
-
 	onMounted(()=>{
         if(!MediaSource.isTypeSupported(codec)){
             console.log(`codec: ${codec} is not supported`);
@@ -14,11 +11,11 @@
         sourceBuffer = new MediaSource();
 
         sourceBuffer.addEventListener('sourceopen',(ev)=>{
-            console.log("source open")
+            console.log("source open");
             let b = ev.target;
             
             //will need a way to dynamically set the codec but that is a later problem
-            sourceBuffer = b.addSourceBuffer(codec)
+            sourceBuffer = b.addSourceBuffer(codec);
             sourceBuffer.addEventListener('update',()=>{
                 console.log("source buffer update")
                 if (queue.length > 0 && !sourceBuffer.updating) {
@@ -30,10 +27,19 @@
     });
 
 </script>
+<script>
+    import {serverAddr} from "utils/variables";
+    
+
+    function startWebSocket() {
+        const ws = new WebSocket(serverAddr);
+        ws.onopen(()=>{
+            console.log("web socket connection is started");
+        })
+        return ws;
+    }
+</script>
 <template>
     still here
-    <video :width="{playerWidth}" :height="{playerHeight}">
-        <source :src="{sourceBuffer}" type="video/youtube">
-        Your browser does not support video players
-    </video>
+    
  </template>
