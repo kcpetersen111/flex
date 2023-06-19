@@ -2,6 +2,8 @@
     let sourceBuffer;
     //this is temporary just to pass the check, We will want this to be set dynamically
     let codec = 'video/mp4; codecs="avc1.4D401F"';
+    //eventually this will be used to put data in while the source buffer is not ready
+    let queue = [];
  
 	onMounted(()=>{
         if(!MediaSource.isTypeSupported(codec)){
@@ -14,15 +16,12 @@
             console.log("source open");
             let b = ev.target;
             
-            //will need a way to dynamically set the codec but that is a later problem
             sourceBuffer = b.addSourceBuffer(codec);
             sourceBuffer.addEventListener('update',()=>{
-                console.log("source buffer update")
                 if (queue.length > 0 && !sourceBuffer.updating) {
                     sourceBuffer.appendBuffer(queue.shift());
                 }
-            })
-            speakerReady = true;
+            });
         },false)
     });
 
