@@ -1,6 +1,7 @@
 package flexapi
 
 import (
+	"context"
 	"fmt"
 	"html"
 	"log"
@@ -10,36 +11,68 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+}
+
+type connection struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	conn   *websocket.Conn
+}
+
+type message struct {
+	Test string `json:"test"`
 }
 
 // This is temporary to just test the websockets out. Need to change the structure
 func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Websocket will be created when the client wants to play a movie.
-	// This is how we are going to stream the movie from the server to the client
-
-	// Upgrade the plain http connection to a web socket
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	ws := &connection{
+		ctx:    ctx,
+		cancel: cancel,
+		conn:   conn,
+	}
+	go ws.receive()
+	go ws.send()
+}
 
-	// This will read a value from the socket, print the message to the console, and write it back to the client
-	// Basically just a ping / pong to make sure that the connection works for now
+func (w *connection) receive() {
+	defer w.cancel()
+	msg := &message{}
 	for {
-		// Read message from browser
-		msgType, msg, err := conn.ReadMessage()
+		err := w.conn.ReadJSON(msg)
 		if err != nil {
+			//probably handle the connection closing differently than other errors that we may want to be more minor
 			return
 		}
+		log.Printf("message received: %v\n", msg)
+	}
+}
 
-		// Print the message to the console
-		fmt.Printf("%s sent: %v\n", conn.RemoteAddr(), string(msg))
+func (w *connection) send() {
+	defer w.cancel()
 
-		// Write message back to browser
-		if err = conn.WriteMessage(msgType, msg); err != nil {
+	m := message{
+		Test: "success",
+	}
+	count := 0
+	for {
+		// eventually this should probably have a different go routine read the video file and send it over a channel to this
+		select {
+		case <-w.ctx.Done():
 			return
+		default:
+			w.conn.WriteJSON(m)
+			if count > 5 {
+				return
+			}
+			count++
 		}
 	}
 }

@@ -39,8 +39,6 @@ func main() {
 
 	MovieHandler := movieHandler.NewMovieHandler(path)
 
-	MovieHandler.ListMovies()
-
 	server := server.Server{MovieHandler}
 
 	server.BuildEndpoints()
