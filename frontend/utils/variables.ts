@@ -1,0 +1,1 @@
+export let serverAddr:string = "localhost:8080";
