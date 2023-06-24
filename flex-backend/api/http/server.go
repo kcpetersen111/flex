@@ -27,18 +27,12 @@ func (s Server) BuildEndpoints() {
 	http.HandleFunc("/playFile", handlePlayFile)
 	http.HandleFunc("/stopFile", handleStopFile)
 	http.HandleFunc("/ws", s.handleWebSocket)
-	// Used to test the websocket
-	http.HandleFunc("/", handleSendRoot)
 }
 
 func (Server) Serve(port int) {
 	// Start the server
 	log.Printf("Starting server on port %d\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil))
-}
-
-func handleSendRoot(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "websockets.html")
 }
 
 func (Server) sendServerError(w http.ResponseWriter) {
