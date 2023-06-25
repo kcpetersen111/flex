@@ -29,6 +29,7 @@ type message struct {
 func (s Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
+	log.Println("Websocket Upgraded")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,6 +50,7 @@ func (w *connection) receive() {
 		err := w.conn.ReadJSON(msg)
 		if err != nil {
 			//probably handle the connection closing differently than other errors that we may want to be more minor
+			log.Printf("An error has occurred in receiving a message: %v\n", err)
 			return
 		}
 		log.Printf("message received: %v\n", msg)

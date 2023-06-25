@@ -29,17 +29,38 @@
 <script>
     import {serverAddr} from "~/utils/variables";
     
+    function until(conditionFunction) {
+        const poll = resolve => {
+            if(conditionFunction()) resolve();
+            else setTimeout(_ => poll(resolve), 400);
+        }
+        return new Promise(poll);
+    }
 
-    function startWebSocket() {
+    async function startWebSocket() {
+        var doneConnecting = false;
         console.log("starting websocket")
         const ws = new WebSocket(`ws://${serverAddr}/ws`);
-        ws.addEventListener("connect",()=>{
+        ws.addEventListener("connect",_=>{
             console.log("web socket connection is started");
+        });
+        ws.addEventListener("open", _=>{
+            console.log("ws open")
+            doneConnecting = true;
+        });
+        ws.addEventListener("message",messageEvent=>{
+            console.log(JSON.parse(messageEvent.data))
         })
+
+        await until(_=>doneConnecting==true);
         return ws;
+    }
+    async function pingServer() {
+        const ws = await startWebSocket();
+        ws.send(JSON.stringify({"Test":"Success"}));
     }
 </script>
 <template>
-    <button v-on:click="startWebSocket">start ws</button>
+    <button v-on:click="pingServer">start ws</button>
     
  </template>
